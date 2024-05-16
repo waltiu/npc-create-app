@@ -7,13 +7,24 @@ import {
   getRoot,
   getTemporaryPath,
   mkDir,
+  deleteObjectEmptyKey
 } from "./lib/util.js";
-import { FRAMEWORKS, TEMPLATES, overwriteMap } from "./lib/constant.js";
-import { isValidPackageName, isEmpty, toValidPackageName } from "./lib/check.js";
+import {
+  FRAMEWORKS,
+  TEMPLATES,
+  overwriteMap,
+  packageManagerList,
+} from "./lib/constant.js";
+import {
+  isValidPackageName,
+  isEmpty,
+  toValidPackageName,
+} from "./lib/check.js";
 import { cloneCode } from "./lib/clone.js";
 import prompts from "prompts";
 import { red, reset } from "kolorist";
 import { addPackageJson, copyTempToTarget, transferFiles } from "./lib/file.js";
+import { endTip } from "./lib/tip.js";
 
 const argv = minimist(process.argv.slice(2), { string: ["_"] });
 
@@ -23,7 +34,9 @@ async function init() {
   let result = {
     projectName: formatTargetDir(argv._[0]),
     template: argv.template || argv.t,
+    packageManager: argv.package || argv.p,
   };
+  console.log(result, "result");
   try {
     const promptResult = await prompts(
       [
@@ -39,7 +52,8 @@ async function init() {
         },
         {
           type: () => {
-            return !fs.existsSync(result.projectName) || isEmpty(result.projectName)
+            return !fs.existsSync(result.projectName) ||
+              isEmpty(result.projectName)
               ? null
               : "select";
           },
@@ -119,6 +133,39 @@ async function init() {
               };
             }),
         },
+        {
+          type: (framework) =>
+            framework && framework.templates ? "select" : null,
+          name: "template",
+          message: reset("Select a template:"),
+          choices: (framework) =>
+            framework.templates.map((template) => {
+              const variantColor = template.color;
+              return {
+                title: variantColor(template.display || template.name),
+                value: template.name,
+              };
+            }),
+        },
+        {
+          type: (value) => {
+            return packageManagerList.find(
+              (item) => item.name === result.packageManager
+            ) && result.packageManager
+              ? null
+              : "select";
+          },
+          name: "packageManager",
+          message: reset("Select a package manager:"),
+          choices: () =>
+            packageManagerList.map((packageManager) => {
+              const variantColor = packageManager.color;
+              return {
+                title: variantColor(packageManager.display),
+                value: packageManager.name,
+              };
+            }),
+        },
       ],
       {
         onCancel: () => {
@@ -127,17 +174,24 @@ async function init() {
       }
     );
     result = {
-      ...promptResult,
       ...result,
+      ...deleteObjectEmptyKey(promptResult)
     };
   } catch (cancelled) {
     console.log(cancelled.message);
     return;
   }
-  const { projectName,overwrite, packageName, template } = result;
-  const tempDir = getTemporaryPath(projectName);
-  const targetRot = getRoot(projectName);
+  const { projectName, overwrite, packageName, template, packageManager } =
+    result;
+
+  const tempDir = getTemporaryPath(projectName);  
+  const targetRot = getRoot(projectName); 
   const tempRoot = getRoot(tempDir);
+  endTip({
+    projectName,
+    targetRot,
+  })
+  return
   if (overwrite === overwriteMap.remove) {
     emptyDir(targetRot);
   } else {
@@ -149,10 +203,17 @@ async function init() {
   transferFiles(targetRot, false);
   addPackageJson(tempRoot, targetRot, {
     packageName: packageName || projectName,
+    packageManager
   });
+
   setTimeout(() => {
     deleteDir(tempRoot);
   }, 3000);
+
+  endTip({
+    projectName,
+    targetRot,
+  })
 }
 
 init().catch((e) => {
