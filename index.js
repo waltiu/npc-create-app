@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import fs from "fs";
 import minimist from "minimist";
 import {
@@ -31,12 +32,17 @@ const argv = minimist(process.argv.slice(2), { string: ["_"] });
 const defaultTargetDir = "new-project";
 
 async function init() {
-  startTip()
   let result = {
     projectName: formatTargetDir(argv._[0]),
     template: argv.template || argv.t,
     packageManager: argv.package || argv.p,
+    version: argv.version || argv.v,
+    help: argv.help || argv.h
   };
+ const isEnd= startTip(result)
+ if(isEnd){
+  return 
+ }
   try {
     const promptResult = await prompts(
       [
