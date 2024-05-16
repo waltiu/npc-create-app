@@ -17,6 +17,7 @@
     "commander": "^12.0.0",
     "cyan": "^0.0.0",
     "download-git-repo": "^3.0.2",
+    "figlet": "^1.7.0",
     "git-clone": "^0.2.0",
     "kolorist": "^1.8.0",
     "minimist": "^1.2.8",

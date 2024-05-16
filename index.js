@@ -24,19 +24,19 @@ import { cloneCode } from "./lib/clone.js";
 import prompts from "prompts";
 import { red, reset } from "kolorist";
 import { addPackageJson, copyTempToTarget, transferFiles } from "./lib/file.js";
-import { endTip } from "./lib/tip.js";
+import { endTip, startTip } from "./lib/tip.js";
 
 const argv = minimist(process.argv.slice(2), { string: ["_"] });
 
 const defaultTargetDir = "new-project";
 
 async function init() {
+  startTip()
   let result = {
     projectName: formatTargetDir(argv._[0]),
     template: argv.template || argv.t,
     packageManager: argv.package || argv.p,
   };
-  console.log(result, "result");
   try {
     const promptResult = await prompts(
       [
@@ -187,11 +187,6 @@ async function init() {
   const tempDir = getTemporaryPath(projectName);  
   const targetRot = getRoot(projectName); 
   const tempRoot = getRoot(tempDir);
-  endTip({
-    projectName,
-    targetRot,
-  })
-  return
   if (overwrite === overwriteMap.remove) {
     emptyDir(targetRot);
   } else {
@@ -205,7 +200,6 @@ async function init() {
     packageName: packageName || projectName,
     packageManager
   });
-
   setTimeout(() => {
     deleteDir(tempRoot);
   }, 3000);
