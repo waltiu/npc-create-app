@@ -107,11 +107,11 @@ async function init() {
         },
         {
           type: (framework) =>
-            framework && framework.variants ? "select" : null,
+            framework && framework.templates ? "select" : null,
           name: "template",
           message: reset("Select a template:"),
           choices: (framework) =>
-            framework.variants.map((template) => {
+            framework.templates.map((template) => {
               const variantColor = template.color;
               return {
                 title: variantColor(template.display || template.name),
