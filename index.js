@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import minimist from "minimist";
 import {
   deleteDir,
@@ -10,7 +9,7 @@ import {
   mkDir,
 } from "./lib/util.js";
 import { FRAMEWORKS, TEMPLATES, overwriteMap } from "./lib/constant.js";
-import { isValidPackageName, isEmpty } from "./lib/check.js";
+import { isValidPackageName, isEmpty, toValidPackageName } from "./lib/check.js";
 import { cloneCode } from "./lib/clone.js";
 import prompts from "prompts";
 import { red, reset } from "kolorist";
@@ -23,7 +22,7 @@ const defaultTargetDir = "new-project";
 async function init() {
   let result = {
     projectName: formatTargetDir(argv._[0]),
-    variant: argv.template || argv.t,
+    template: argv.template || argv.t,
   };
   try {
     const promptResult = await prompts(
@@ -85,16 +84,16 @@ async function init() {
         },
         {
           type: () => {
-            return result.argTemplate && TEMPLATES.includes(result.argTemplate)
+            return result.template && TEMPLATES.includes(result.template)
               ? null
               : "select";
           },
           name: "framework",
           message:
-            typeof result.argTemplate === "string" &&
-            !TEMPLATES.includes(result.argTemplate)
+            typeof result.template === "string" &&
+            !TEMPLATES.includes(result.template)
               ? reset(
-                  `"${result.argTemplate}" isn't a valid template. Please choose from below: `
+                  `"${result.template}" isn't a valid template. Please choose from below: `
                 )
               : reset("Select a framework:"),
           initial: 0,
@@ -109,14 +108,14 @@ async function init() {
         {
           type: (framework) =>
             framework && framework.variants ? "select" : null,
-          name: "variant",
-          message: reset("Select a variant:"),
+          name: "template",
+          message: reset("Select a template:"),
           choices: (framework) =>
-            framework.variants.map((variant) => {
-              const variantColor = variant.color;
+            framework.variants.map((template) => {
+              const variantColor = template.color;
               return {
-                title: variantColor(variant.display || variant.name),
-                value: variant.name,
+                title: variantColor(template.display || template.name),
+                value: template.name,
               };
             }),
         },
@@ -135,7 +134,7 @@ async function init() {
     console.log(cancelled.message);
     return;
   }
-  const { projectName,overwrite, packageName, variant } = result;
+  const { projectName,overwrite, packageName, template } = result;
   const tempDir = getTemporaryPath(projectName);
   const targetRot = getRoot(projectName);
   const tempRoot = getRoot(tempDir);
@@ -144,7 +143,7 @@ async function init() {
   } else {
     mkDir(targetRot);
   }
-  await cloneCode(tempDir, variant);
+  await cloneCode(tempDir, template);
   transferFiles(tempRoot, true);
   copyTempToTarget(tempRoot, targetRot);
   transferFiles(targetRot, false);
