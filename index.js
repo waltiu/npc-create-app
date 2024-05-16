@@ -21,38 +21,34 @@ const argv = minimist(process.argv.slice(2), { string: ["_"] });
 const defaultTargetDir = "new-project";
 
 async function init() {
-  const argTargetDir = formatTargetDir(argv._[0]);
-  const argTemplate = argv.template || argv.t;
-  const getProjectName = () =>
-    targetDir === "." ? path.basename(path.resolve()) : targetDir;
-  let targetDir = argTargetDir || defaultTargetDir;
   let result = {
     projectName: formatTargetDir(argv._[0]),
     variant: argv.template || argv.t,
   };
   try {
-    result = await prompts(
+    const promptResult = await prompts(
       [
         {
-          type: argTargetDir ? null : "text",
+          type: result.projectName ? null : "text",
           name: "projectName",
           message: reset("Project name:"),
           initial: defaultTargetDir,
           onState: (state) => {
-            targetDir = formatTargetDir(state.value) || defaultTargetDir;
+            result.projectName =
+              formatTargetDir(state.value) || defaultTargetDir;
           },
         },
         {
           type: () => {
-            return !fs.existsSync(targetDir) || isEmpty(targetDir)
+            return !fs.existsSync(result.projectName) || isEmpty(result.projectName)
               ? null
               : "select";
           },
           name: "overwrite",
           message: () =>
-            (targetDir === "."
+            (result.projectName === "."
               ? "Current directory"
-              : `Target directory "${targetDir}"`) +
+              : `Target directory "${result.projectName}"`) +
             ` is not empty. Please choose how to proceed:`,
           initial: 0,
           choices: [
@@ -80,24 +76,25 @@ async function init() {
           name: "overwriteChecker",
         },
         {
-          type: () => (isValidPackageName(getProjectName()) ? null : "text"),
+          type: () => (isValidPackageName(result.projectName) ? null : "text"),
           name: "packageName",
           message: reset("Package name:"),
-          initial: () => toValidPackageName(getProjectName()),
+          initial: () => toValidPackageName(result.projectName),
           validate: (dir) =>
             isValidPackageName(dir) || "Invalid package.json name",
         },
         {
           type: () => {
-            return argTemplate && TEMPLATES.includes(argTemplate)
+            return result.argTemplate && TEMPLATES.includes(result.argTemplate)
               ? null
               : "select";
           },
           name: "framework",
           message:
-            typeof argTemplate === "string" && !TEMPLATES.includes(argTemplate)
+            typeof result.argTemplate === "string" &&
+            !TEMPLATES.includes(result.argTemplate)
               ? reset(
-                  `"${argTemplate}" isn't a valid template. Please choose from below: `
+                  `"${result.argTemplate}" isn't a valid template. Please choose from below: `
                 )
               : reset("Select a framework:"),
           initial: 0,
@@ -130,13 +127,17 @@ async function init() {
         },
       }
     );
+    result = {
+      ...promptResult,
+      ...result,
+    };
   } catch (cancelled) {
     console.log(cancelled.message);
     return;
   }
-  const { overwrite, packageName, variant } = result;
-  const tempDir = getTemporaryPath(targetDir);
-  const targetRot = getRoot(targetDir);
+  const { projectName,overwrite, packageName, variant } = result;
+  const tempDir = getTemporaryPath(projectName);
+  const targetRot = getRoot(projectName);
   const tempRoot = getRoot(tempDir);
   if (overwrite === overwriteMap.remove) {
     emptyDir(targetRot);
@@ -148,7 +149,7 @@ async function init() {
   copyTempToTarget(tempRoot, targetRot);
   transferFiles(targetRot, false);
   addPackageJson(tempRoot, targetRot, {
-    packageName: packageName || getProjectName(),
+    packageName: packageName || projectName,
   });
   setTimeout(() => {
     deleteDir(tempRoot);
