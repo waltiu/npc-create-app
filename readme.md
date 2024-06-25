@@ -1,6 +1,6 @@
 # npc-create-app <a href="https://npmjs.com/package/npc-create-app"><img src="https://img.shields.io/npm/v/npc-create-app" alt="npm package"></a>
 
-## install  npc-create-app
+## install  
 
 With NPM:
 
@@ -20,7 +20,7 @@ With PNPM:
 $ pnpm install -g npc-create-app
 ```
 
-## create app
+## create 
 
 You can also directly specify the project name and the template you want to use via additional command line options. For example, to scaffold a Vite + React + ts project, run:
 
