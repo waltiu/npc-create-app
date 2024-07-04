@@ -137,7 +137,7 @@ async function init() {
               const variantColor = template.color;
               return {
                 title: variantColor(`${template.branch}${template.desc&&` (${template.desc})`}`),
-                value: template.name,
+                value: template.branch,
               };
             }),
         },
