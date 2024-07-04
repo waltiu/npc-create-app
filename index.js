@@ -11,11 +11,13 @@ import {
   deleteObjectEmptyKey
 } from "./lib/util.js";
 import {
-  FRAMEWORKS,
-  TEMPLATES,
   overwriteMap,
   packageManagerList,
 } from "./lib/constant.js";
+import {
+  FRAMEWORKS,
+  TEMPLATES
+} from './lib/templates.js'
 import {
   isValidPackageName,
   isEmpty,
@@ -120,7 +122,7 @@ async function init() {
           choices: FRAMEWORKS.map((framework) => {
             const frameworkColor = framework.color;
             return {
-              title: frameworkColor(framework.display || framework.name),
+              title: frameworkColor(framework.type),
               value: framework,
             };
           }),
@@ -134,27 +136,13 @@ async function init() {
             framework.templates.map((template) => {
               const variantColor = template.color;
               return {
-                title: variantColor(template.display || template.name),
+                title: variantColor(`${template.branch}${template.desc&&` (${template.desc})`}`),
                 value: template.name,
               };
             }),
         },
         {
-          type: (framework) =>
-            framework && framework.templates ? "select" : null,
-          name: "template",
-          message: reset("Select a template:"),
-          choices: (framework) =>
-            framework.templates.map((template) => {
-              const variantColor = template.color;
-              return {
-                title: variantColor(template.display || template.name),
-                value: template.name,
-              };
-            }),
-        },
-        {
-          type: (value) => {
+          type: () => {
             return packageManagerList.find(
               (item) => item.name === result.packageManager
             ) && result.packageManager
